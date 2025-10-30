@@ -1,0 +1,21 @@
+# Node dependencies
+node_modules/
+dist/
+
+# Environment files
+# .env
+# .env.local
+
+# IDE / OS files
+.vscode/
+.DS_Store
+._*
+__MACOSX/
+
+# Logs
+npm-debug.log
+yarn-error.log
+
+# NestJS
+.nest-cli.json
+coverage/
