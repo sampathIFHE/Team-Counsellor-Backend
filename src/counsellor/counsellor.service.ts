@@ -72,6 +72,9 @@ async updateSlotTimings(
   if (presentSlots.length === 0) {
     const slotsToCreate: Slot[] = [];
     const weekdays = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+    const now = new Date();
+    const bufferMinutes = 60; // minimum time from now to allow slot creation
+
 
     for (let i = 0; i < 14; i++) { // next 2 weeks
       const date = new Date();
@@ -84,6 +87,17 @@ async updateSlotTimings(
       // Create slots only if counsellor has timings for this day
       if (slotTimings[dayName] && slotTimings[dayName].length > 0) {
         for (const timing of slotTimings[dayName]) {
+
+             const [hourStr, minuteStr] = timing.split(':');
+      const slotDateTime = new Date(date);
+      slotDateTime.setHours(Number(hourStr), Number(minuteStr), 0, 0);
+
+      // Only for today, skip past slots
+      if (date.toDateString() === now.toDateString() && 
+      slotDateTime.getTime() <= now.getTime() + bufferMinutes * 60 * 1000) {
+        continue;
+      }
+
           slotsToCreate.push(
             this.slotRepository.create({
               counsellor: { id: counsellor.id, name: counsellor.name },
