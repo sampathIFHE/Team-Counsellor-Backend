@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateCounsellorDto } from './dto/create-counsellor.dto';
 import { UpdateCounsellorDto } from './dto/update-counsellor.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -29,10 +29,21 @@ export class CounsellorService {
         });
   }
 
-  async create(createCounsellorDto: CreateCounsellorDto) {
-    const counsellor =  this.counsellorRepository.create(createCounsellorDto);
-    return await this.counsellorRepository.save(counsellor);
+async create(createCounsellorDto: CreateCounsellorDto) {
+  // Check if email already exists
+  const existing = await this.counsellorRepository.findOneBy({
+    email: createCounsellorDto.email,
+    mobile: createCounsellorDto.mobile,
+  });
+
+  if (existing) {
+    throw new BadRequestException('Counsellor with email or mobile number already exists');
   }
+
+  const counsellor = this.counsellorRepository.create(createCounsellorDto);
+  return await this.counsellorRepository.save(counsellor);
+}
+
 
   async findAll() {
     const counsellors = await this.counsellorRepository.find();

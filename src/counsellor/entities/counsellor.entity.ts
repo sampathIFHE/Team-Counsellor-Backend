@@ -8,7 +8,7 @@ export class Counsellor {
   @Column()
   name: string;
 
-  @Column({ unique: true })
+  @Column()
   email: string;
 
   @Column()
