@@ -107,11 +107,11 @@ async updateSlotTimings(
       if (date.toDateString() === now.toDateString() && 
       slotDateTime.getTime() <= now.getTime() + bufferMinutes * 60 * 1000) {
         continue;
-      }
-
+      }  
+          let  counsellorJson = { id: counsellor.id, name: counsellor.name }
           slotsToCreate.push(
             this.slotRepository.create({
-              counsellor: { id: counsellor.id, name: counsellor.name },
+              counsellor:counsellorJson ,
               date: date.toISOString().split('T')[0],
               slotTime: timing,
               status: SlotStatus.AVAILABLE,
