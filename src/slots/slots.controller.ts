@@ -31,4 +31,14 @@ export class SlotsController {
   remove(@Param('id') id: string) {
     return this.slotsService.remove(id);
   }
+
+   @Get('cousellorSlots/:counsellorId')
+  findByCounsellor(@Param('counsellorId') counsellorId: string) {
+    return this.slotsService.findByCounsellor(counsellorId);
+  }
+
+   @Post('block/:id')
+  blockSlot(@Param('id') id: string, @Body('reason') reason: string) {
+    return this.slotsService.blockTheSlot(id, reason);
+  }
 }

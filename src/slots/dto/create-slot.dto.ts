@@ -25,4 +25,7 @@ export class CreateSlotDto {
         name: string;
         email: string;
     };
+
+    @IsOptional()
+    reason?: string;
 }

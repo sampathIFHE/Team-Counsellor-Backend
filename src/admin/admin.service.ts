@@ -24,6 +24,10 @@ export class AdminService {
     });
   }  
  async create(createAdminDto: CreateAdminDto) {
+  const existingAdmin = await this.adminRepository.findOne({where: {email: createAdminDto.email, mobile: createAdminDto.mobile}});
+  if(existingAdmin){
+    throw new NotFoundException(`Admin with email or mobile no already exists`);
+  } 
     const admin =  this.adminRepository.create(createAdminDto);
     return await this.adminRepository.save(admin);
   }

@@ -1,3 +1,4 @@
+import { Expose } from "class-transformer";
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 export enum SlotStatus {
@@ -22,15 +23,21 @@ export class Slot {
     status: SlotStatus;
 
     @Column('jsonb')
+    @Expose()
     counsellor: {
         id: string;
         name: string;
     };
 
     @Column('jsonb', { nullable: true })
+    @Expose()
     user?: {
         id: string;
         name: string;
         email: string;
     };
+
+     @Column({nullable: true})
+    @Expose()
+    reason?: string;
 }

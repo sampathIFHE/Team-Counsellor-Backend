@@ -21,6 +21,7 @@ import { SlotsModule } from './slots/slots.module';
       ssl: {
         rejectUnauthorized: false, // Needed for Neon
       },
+      entitySkipConstructor: true,
     }),
 
     // Your modules
