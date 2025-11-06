@@ -27,6 +27,11 @@ export class SlotsController {
     return this.slotsService.update(id, updateSlotDto);
   }
 
+  @Delete('clear')
+  clearAllSlots() {
+  return this.slotsService.clearAllSlots();
+  }
+
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.slotsService.remove(id);
@@ -41,4 +46,7 @@ export class SlotsController {
   blockSlot(@Param('id') id: string, @Body('reason') reason: string) {
     return this.slotsService.blockTheSlot(id, reason);
   }
+ 
+
+  
 }

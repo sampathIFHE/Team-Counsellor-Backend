@@ -72,60 +72,83 @@ async updateSlotTimings(
   if (!counsellor) {
     throw new Error(`Counsellor with id ${id} not found`);
   }
-
-  // Check if slots already exist for today
+  const weekdays = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
   const todayStr = new Date().toISOString().split('T')[0];
   const presentSlots = await this.slotRepository.findBy({
     counsellor: { id },
     date: todayStr,
   });
+  const now = new Date();
+  const plus60Mins = new Date(now.getTime() + 60 * 60000);
 
-  if (presentSlots.length === 0) {
+  // Defensive logging (guard against undefined access)
+  try {
+    const todayKey = weekdays[new Date().getDay()];
+    const todayArr = slotTimings[todayKey] || [];
+    const lastToday = todayArr.length ? todayArr[todayArr.length - 1] : 'none';
+    console.log(todayKey, lastToday, todayStr);
+  } catch (err) {
+    console.log('slotTimings logging error', err);
+  }
+
+  // Determine whether there is any future slot for today (beyond buffer). If none, we should create slots for the upcoming days.
+  const bufferMinutes = 60; // minimum time from now to allow slot creation
+  const hasFutureSlotToday = presentSlots.some(s => {
+    if (!s.slotTime) return false;
+    const [start] = s.slotTime.split(' - ');
+    const [h, m] = start.split(':');
+    const slotDt = new Date();
+    slotDt.setHours(Number(h), Number(m), 0, 0);
+    return slotDt.getTime() > now.getTime() + bufferMinutes * 60 * 1000;
+  });
+
+  // If there is no future slot today (either there are no slots or all are past), create slots for the coming days
+  if (!hasFutureSlotToday) {
     const slotsToCreate: Slot[] = [];
-    const weekdays = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
-    const now = new Date();
-    const bufferMinutes = 60; // minimum time from now to allow slot creation
-
-
-    for (let i = 0; i < 14; i++) { // next 2 weeks
+    // loop the next 7 days starting from tomorrow. We'll skip weekends.
+    for (let i = 1; i <= 7; i++) {
       const date = new Date();
       date.setDate(date.getDate() + i);
       const dayName = weekdays[date.getDay()];
 
-      // Skip weekends
-      if (dayName === "saturday" || dayName === "sunday") continue;
+      if (dayName === 'saturday' || dayName === 'sunday') continue;
 
-      // Create slots only if counsellor has timings for this day
       if (slotTimings[dayName] && slotTimings[dayName].length > 0) {
         for (const timing of slotTimings[dayName]) {
+          const [startTime] = timing.split(' - ');
+          const [hourStr, minuteStr] = startTime.split(':');
+          const slotDateTime = new Date(date);
+          slotDateTime.setHours(Number(hourStr), Number(minuteStr), 0, 0);
+          console.log('Slot DateTime:', slotDateTime);
 
-             const [hourStr, minuteStr] = timing.split(':');
-      const slotDateTime = new Date(date);
-      slotDateTime.setHours(Number(hourStr), Number(minuteStr), 0, 0);
+          const dateStr = date.toISOString().split('T')[0];
 
-      // Only for today, skip past slots
-      if (date.toDateString() === now.toDateString() && 
-      slotDateTime.getTime() <= now.getTime() + bufferMinutes * 60 * 1000) {
-        continue;
-      }  
-          let  counsellorJson = { id: counsellor.id, name: counsellor.name }
+          // check if slot already exists for this date/time in DB
+          const slotExists = await this.slotRepository.findOneBy({
+            counsellor: { id },
+            date: dateStr,
+            slotTime: timing,
+          });
+          if (slotExists) continue;
+
+          const counsellorJson = { id: counsellor.id, name: counsellor.name };
           slotsToCreate.push(
             this.slotRepository.create({
-              counsellor:counsellorJson ,
-              date: date.toISOString().split('T')[0],
+              counsellor: counsellorJson,
+              date: dateStr,
               slotTime: timing,
               status: SlotStatus.AVAILABLE,
-            })
+            }),
           );
         }
       }
     }
 
-    // Bulk save
-    await this.slotRepository.save(slotsToCreate);
+    if (slotsToCreate.length) {
+      await this.slotRepository.save(slotsToCreate);
+    }
   }
 
-  // Update counsellor's slotTimings JSON
   counsellor.slotTimings = slotTimings;
   return this.counsellorRepository.save(counsellor);
 }
@@ -154,4 +177,5 @@ async updateSlotTimings(
     }
     return this.counsellorRepository.remove(counsellor);
   }
+  
 }

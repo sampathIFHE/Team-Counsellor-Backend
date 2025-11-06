@@ -52,6 +52,11 @@ async findByCounsellor(counsellorId: string) {
     return filteredSlots;
   }
 
+    async clearAllSlots() {
+    await this.slotRepository.clear();
+    return {message: 'All slots have been cleared successfully'};
+  }
+
 async blockTheSlot(id: string, reason: string) {
     const slot = await this.slotRepository.findOneBy({ id });
     
