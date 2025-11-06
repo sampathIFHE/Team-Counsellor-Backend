@@ -74,16 +74,28 @@ export class AdminService {
   }
 
   async verifyOtp(email: string, otp: string) {
-    const admin: any = await this.adminRepository.findOne({ where: { email } });
+    const admin: any = await this.adminRepository.findOne({ where: [{ email },{employeeId:email}] });
     if (!admin) {
-      throw new NotFoundException(`Admin with email ${email} not found`);
+    const counsellor:any = await this.counsellorRepository.findOne({ where: [{ email }, {employeeId:email} ]});
+    if(counsellor){
+      if(counsellor.otp === otp){
+        counsellor.otp = null;
+        await this.counsellorRepository.save(counsellor);
+        return counsellor;
+      }else{
+        return { message: "Invalid OTP" };
+      }
+    }else{
+      throw new NotFoundException(`No user found with email or employeeId ${email}`);
     }
+    }else{
     if (admin.otp === otp) {
       admin.otp = null;
       await this.adminRepository.save(admin);
       return admin;
     } else {
       return { message: "Invalid OTP" };
+    }
     }
   }
 
