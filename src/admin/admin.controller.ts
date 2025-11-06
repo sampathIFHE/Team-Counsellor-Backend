@@ -39,4 +39,10 @@ export class AdminController {
     await this.adminService.sendOtpEmail(body.email, otp);
     return { message: `OTP sent to ${body.email}` };
   }
+
+  @Post('verify')
+  async verifyOtp(@Body() body: { email: string; otp: string }) {
+    const isValid = await this.adminService.verifyOtp(body.email, body.otp);
+    return isValid;
+  } 
 }

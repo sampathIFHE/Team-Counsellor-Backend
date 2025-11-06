@@ -64,6 +64,20 @@ async create(createCounsellorDto: CreateCounsellorDto) {
   }
 
 
+  async verifyOtp(email: string, otp: string) {
+    const counsellor: any = await this.counsellorRepository.findOne({where: {email}});
+    if (!counsellor) {
+      return false;
+    }
+if (counsellor.otp === otp) {
+      counsellor.otp = null; // Clear OTP after successful verification
+      await this.counsellorRepository.save(counsellor);
+      return counsellor;
+    } else{
+      return {message:"Invalid OTP"}
+    }
+  }
+
 async updateSlotTimings(
   id: string,
   slotTimings: Record<string, string[]>

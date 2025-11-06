@@ -39,6 +39,12 @@ export class CounsellorController {
     return { message: `OTP sent to ${body.email}` };
   }
 
+  @Post('verify')
+  async verifyOtp(@Body() body: { email: string; otp: string }) {
+    const isValid = await this.counsellorService.verifyOtp(body.email, body.otp);
+    return isValid;
+  }
+
   @Post('updateSlotTimings/:id')
   updateSlotTimings(@Param('id') id: string, @Body()   slotTimings: Record<string, string[]> ) {
     return this.counsellorService.updateSlotTimings(id,   slotTimings);
