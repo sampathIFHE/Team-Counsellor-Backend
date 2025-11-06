@@ -1,10 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
 import { Admin } from './entities/admin.entity';
 import { Repository } from 'typeorm';
 import * as nodemailer from 'nodemailer';
+import { Counsellor } from 'src/counsellor/entities/counsellor.entity';
 
 
 @Injectable()
@@ -13,7 +14,9 @@ export class AdminService {
 
   constructor(
     @InjectRepository(Admin)
-    private adminRepository: Repository<Admin>
+    private adminRepository: Repository<Admin>,
+    @InjectRepository(Counsellor)
+    private counsellorRepository: Repository<Counsellor>,
   ) {
     this.transporter = nodemailer.createTransport({
       service: "gmail",
@@ -42,16 +45,32 @@ export class AdminService {
   }
 
   async sendOtpEmail(email: string, otp: string) {
+    let mail:any
+    const admin: any = await this.adminRepository.findOne({ where: [{ email }, {employeeId:email} ]});
+   if(!admin){
+    const counsellor:any = await this.counsellorRepository.findOne({ where: [{ email }, {employeeId:email} ]});
+    if(counsellor){
+      counsellor.otp = otp;
+      await this.counsellorRepository.save(counsellor);
+      mail = counsellor.email;
+    }
+   }else{
+    mail = admin.email;
+    admin.otp = otp;
+    await this.adminRepository.save(admin);
+   }
+   if(mail){
     await this.transporter.sendMail({
       from: `"Counsellor App" <${process.env.MAIL_USER}>`,
-      to: email,
+      to: mail,
       subject: "Your OTP Code",
       text: `Your OTP is ${otp}. It will expire in 5 minutes.`,
     });
-    const admin: any = await this.adminRepository.findOne({ where: { email } });
-    admin.otp = otp;
-    await this.adminRepository.save(admin);
-    console.log(`OTP ${otp} sent to ${email}`);
+    
+   }else{
+    throw new NotFoundException(`No user found with email or employeeId ${email}`);
+   }
+
   }
 
   async verifyOtp(email: string, otp: string) {
