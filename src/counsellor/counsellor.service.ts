@@ -77,7 +77,6 @@ if (counsellor.otp === otp) {
       return {message:"Invalid OTP"}
     }
   }
-
 async updateSlotTimings(
   id: string,
   slotTimings: Record<string, string[]>
@@ -87,85 +86,139 @@ async updateSlotTimings(
     throw new Error(`Counsellor with id ${id} not found`);
   }
   const weekdays = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
-  const todayStr = new Date().toISOString().split('T')[0];
-  const presentSlots = await this.slotRepository.findBy({
-    counsellor: { id },
-    date: todayStr,
-  });
+ 
+  
   const now = new Date();
-  const plus60Mins = new Date(now.getTime() + 60 * 60000);
+const tomorrow = new Date(now);
+tomorrow.setDate(now.getDate() + 1);
 
-  // Defensive logging (guard against undefined access)
-  try {
-    const todayKey = weekdays[new Date().getDay()];
-    const todayArr = slotTimings[todayKey] || [];
-    const lastToday = todayArr.length ? todayArr[todayArr.length - 1] : 'none';
-    console.log(todayKey, lastToday, todayStr);
-  } catch (err) {
-    console.log('slotTimings logging error', err);
+const slotsToCreate: Slot[] = [];
+
+for (let i = 0; i < 7; i++) {
+  tomorrow.setDate(now.getDate() + i);
+  const presentSlots = await this.slotRepository.findBy({
+    counsellorId: id,
+    date: tomorrow.toISOString().split('T')[0],
+  });
+if(presentSlots.length > 0){
+  console.log(presentSlots)
+}
+  if(weekdays[tomorrow.getDay()] === 'saturday' || weekdays[tomorrow.getDay()] === 'sunday' || presentSlots.length > 0){
+    continue;
   }
 
-  // Determine whether there is any future slot for today (beyond buffer). If none, we should create slots for the upcoming days.
-  const bufferMinutes = 60; // minimum time from now to allow slot creation
-  const hasFutureSlotToday = presentSlots.some(s => {
-    if (!s.slotTime) return false;
-    const [start] = s.slotTime.split(' - ');
-    const [h, m] = start.split(':');
-    const slotDt = new Date();
-    slotDt.setHours(Number(h), Number(m), 0, 0);
-    return slotDt.getTime() > now.getTime() + bufferMinutes * 60 * 1000;
-  });
 
-  // If there is no future slot today (either there are no slots or all are past), create slots for the coming days
-  if (!hasFutureSlotToday) {
-    const slotsToCreate: Slot[] = [];
-    // loop the next 7 days starting from tomorrow. We'll skip weekends.
-    for (let i = 1; i <= 7; i++) {
-      const date = new Date();
-      date.setDate(date.getDate() + i);
-      const dayName = weekdays[date.getDay()];
+         for (let i=0; i< slotTimings[weekdays[tomorrow.getDay()]]?.length; i++) {
 
-      if (dayName === 'saturday' || dayName === 'sunday') continue;
-
-      if (slotTimings[dayName] && slotTimings[dayName].length > 0) {
-        for (const timing of slotTimings[dayName]) {
-          const [startTime] = timing.split(' - ');
-          const [hourStr, minuteStr] = startTime.split(':');
-          const slotDateTime = new Date(date);
-          slotDateTime.setHours(Number(hourStr), Number(minuteStr), 0, 0);
-          console.log('Slot DateTime:', slotDateTime);
-
-          const dateStr = date.toISOString().split('T')[0];
-
-          // check if slot already exists for this date/time in DB
-          const slotExists = await this.slotRepository.findOneBy({
-            counsellor: { id },
-            date: dateStr,
-            slotTime: timing,
-          });
-          if (slotExists) continue;
-
-          const counsellorJson = { id: counsellor.id, name: counsellor.name };
           slotsToCreate.push(
             this.slotRepository.create({
-              counsellor: counsellorJson,
-              date: dateStr,
-              slotTime: timing,
+              counsellorId: id,
+              date: tomorrow.toISOString().split('T')[0],
+              slotTime: slotTimings[weekdays[tomorrow.getDay()]][i],
               status: SlotStatus.AVAILABLE,
             }),
           );
-        }
-      }
-    }
+         }
 
     if (slotsToCreate.length) {
       await this.slotRepository.save(slotsToCreate);
     }
-  }
 
-  counsellor.slotTimings = slotTimings;
-  return this.counsellorRepository.save(counsellor);
+
+
 }
+return slotsToCreate;
+}
+
+
+// async updateSlotTimings(
+//   id: string,
+//   slotTimings: Record<string, string[]>
+// ) {
+//   const counsellor: any = await this.findOne(id);
+//   if (!counsellor) {
+//     throw new Error(`Counsellor with id ${id} not found`);
+//   }
+//   const weekdays = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+//   const todayStr = new Date().toISOString().split('T')[0];
+//   const presentSlots = await this.slotRepository.findBy({
+//     counsellor: { id },
+//   });
+//   console.log(presentSlots);
+//   const now = new Date();
+//   const plus60Mins = new Date(now.getTime() + 60 * 60000);
+
+//   // // Defensive logging (guard against undefined access)
+//   // try {
+//   //   const todayKey = weekdays[new Date().getDay()];
+//   //   const todayArr = slotTimings[todayKey] || [];
+//   //   const lastToday = todayArr.length ? todayArr[todayArr.length - 1] : 'none';
+//   //   console.log(todayKey, lastToday, todayStr);
+//   // } catch (err) {
+//   //   console.log('slotTimings logging error', err);
+//   // }
+
+//   // // Determine whether there is any future slot for today (beyond buffer). If none, we should create slots for the upcoming days.
+//   // const bufferMinutes = 60; // minimum time from now to allow slot creation
+//   // const hasFutureSlotToday = presentSlots.some(s => {
+//   //   if (!s.slotTime) return false;
+//   //   const [start] = s.slotTime.split(' - ');
+//   //   const [h, m] = start.split(':');
+//   //   const slotDt = new Date();
+//   //   slotDt.setHours(Number(h), Number(m), 0, 0);
+//   //   return slotDt.getTime() > now.getTime() + bufferMinutes * 60 * 1000;
+//   // });
+
+//   // // If there is no future slot today (either there are no slots or all are past), create slots for the coming days
+//   // if (!hasFutureSlotToday) {
+//   //   const slotsToCreate: Slot[] = [];
+//   //   // loop the next 7 days starting from tomorrow. We'll skip weekends.
+//   //   for (let i = 1; i <= 7; i++) {
+//   //     const date = new Date();
+//   //     date.setDate(date.getDate() + i);
+//   //     const dayName = weekdays[date.getDay()];
+
+//   //     if (dayName === 'saturday' || dayName === 'sunday') continue;
+
+//   //     if (slotTimings[dayName] && slotTimings[dayName].length > 0) {
+//   //       for (const timing of slotTimings[dayName]) {
+//   //         const [startTime] = timing.split(' - ');
+//   //         const [hourStr, minuteStr] = startTime.split(':');
+//   //         const slotDateTime = new Date(date);
+//   //         slotDateTime.setHours(Number(hourStr), Number(minuteStr), 0, 0);
+//   //         console.log('Slot DateTime:', slotDateTime);
+
+//   //         const dateStr = date.toISOString().split('T')[0];
+
+//   //         // check if slot already exists for this date/time in DB
+//   //         const slotExists = await this.slotRepository.findOneBy({
+//   //           counsellor: { id },
+//   //           date: dateStr,
+//   //           slotTime: timing,
+//   //         });
+//   //         if (slotExists) continue;
+
+//   //         const counsellorJson = { id: counsellor.id, name: counsellor.name };
+//   //         slotsToCreate.push(
+//   //           this.slotRepository.create({
+//   //             counsellor: counsellorJson,
+//   //             date: dateStr,
+//   //             slotTime: timing,
+//   //             status: SlotStatus.AVAILABLE,
+//   //           }),
+//   //         );
+//   //       }
+//   //     }
+//   //   }
+
+//   //   if (slotsToCreate.length) {
+//   //     await this.slotRepository.save(slotsToCreate);
+//   //   }
+//   // }
+
+//   // counsellor.slotTimings = slotTimings;
+//   // return this.counsellorRepository.save(counsellor);
+// }
 
 
  async findOne(id: string) {

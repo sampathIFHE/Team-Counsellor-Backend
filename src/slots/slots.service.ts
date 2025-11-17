@@ -14,7 +14,7 @@ export class SlotsService {
 
   async create(createSlotDto: CreateSlotDto) {
 
-  await this.findByCounsellor(createSlotDto.counsellor.id).then(existingSlots => {
+  await this.findByCounsellor(createSlotDto.counsellorId).then(existingSlots => {
       const isConflict = existingSlots.some(slot =>
         slot.date === createSlotDto.date && slot.slotTime === createSlotDto.slotTime
       );

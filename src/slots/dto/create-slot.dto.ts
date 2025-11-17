@@ -10,21 +10,14 @@ export class CreateSlotDto {
     slotTime: string;
 
     @IsNotEmpty()
-    counsellor: {
-        id: string;
-        name: string;
-    };
+    counsellorId: string;
 
     @IsEnum(SlotStatus)
     @IsOptional()
     status?: SlotStatus;
 
     @IsOptional()
-    user?: {
-        id: string;
-        name: string;
-        email: string;
-    };
+    studentId?: string;
 
     @IsOptional()
     reason?: string;

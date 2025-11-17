@@ -22,12 +22,8 @@ export class Slot {
     @Column({ type: 'enum', enum: SlotStatus, default: SlotStatus.AVAILABLE })
     status: SlotStatus;
 
-    @Column('jsonb')
-    @Expose()
-    counsellor: {
-        id: string;
-        name: string;
-    };
+    @Column()
+   counsellorId: string;
 
     @Column('jsonb', { nullable: true })
     @Expose()
