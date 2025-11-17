@@ -27,11 +27,7 @@ export class Slot {
 
     @Column('jsonb', { nullable: true })
     @Expose()
-    user?: {
-        id: string;
-        name: string;
-        email: string;
-    };
+    userId:string
 
      @Column({nullable: true})
     @Expose()

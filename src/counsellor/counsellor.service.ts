@@ -52,7 +52,7 @@ async create(createCounsellorDto: CreateCounsellorDto) {
 
   async sendOtpEmail(email: string, otp: string) {
     await this.transporter.sendMail({
-      from: `"Counsellor App" <${process.env.MAIL_USER}>`,
+      from: `"Safe Minds" <${process.env.MAIL_USER}>`,
       to: email,
       subject: 'Your OTP Code',
       text: `Your OTP is ${otp}. It will expire in 5 minutes.`,
