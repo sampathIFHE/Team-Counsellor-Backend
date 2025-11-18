@@ -27,10 +27,14 @@ export class SlotsService {
   }
 async findByCounsellor(counsellorId: string) {
     console.log(await this.slotRepository.count())
- const slots = await this.slotRepository
-    .createQueryBuilder('slot')
-    .where(`slot.counsellor->>'id' = :counsellorId`, { counsellorId })
-    .getMany();
+//  const slots = await this.slotRepository
+//     .createQueryBuilder('slot')
+//     .where(`slot.counsellor->>'id' = :counsellorId`, { counsellorId })
+//     .getMany();
+
+const slots = await this.slotRepository.find({
+  where:{counsellorId}
+})
   console.log(slots, slots.length)
     const now = new Date();
   
