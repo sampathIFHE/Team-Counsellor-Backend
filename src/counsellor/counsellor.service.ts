@@ -88,7 +88,7 @@ export class CounsellorService {
     if (!counsellor) {
       throw new Error(`Counsellor with id ${id} not found`);
     }
-    if (!counsellor.slotTimings) {
+  
       const weekdays = [
         "sunday",
         "monday",
@@ -143,10 +143,8 @@ export class CounsellorService {
       counsellor.slotTimings = slotTimings;
       this.counsellorRepository.save(counsellor);
       return { message: 'Slot timings created successfully', slots: slotsToCreate };
-    }
-    counsellor.slotTimings = slotTimings;
-    this.counsellorRepository.save(counsellor);
-   return { message: 'Slot timings updated successfully', counsellor: counsellor }
+    
+
   }
 
   // async updateSlotTimings(
