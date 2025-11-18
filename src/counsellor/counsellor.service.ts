@@ -142,7 +142,7 @@ export class CounsellorService {
       }
       counsellor.slotTimings = slotTimings;
       this.counsellorRepository.save(counsellor);
-      return { message: 'Slot timings created successfully', slots: slotsToCreate };
+      return { message: 'Slot timings updated successfully', slots: slotsToCreate };
     
 
   }
