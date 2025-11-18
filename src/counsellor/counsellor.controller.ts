@@ -50,5 +50,9 @@ export class CounsellorController {
     return this.counsellorService.updateSlotTimings(id,   data );
   }
 
+    @Post('generate')
+  async manualGenerateSlots() {
+    const result:any = await this.counsellorService.autogenrateSlots();
+  }
 
 }

@@ -7,6 +7,7 @@ import { Repository } from 'typeorm';
 import * as nodemailer from 'nodemailer';
 import { Slot } from 'src/slots/entities/slot.entity';
 import { SlotStatus } from 'src/slots/entities/slot.entity'; 
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 
 
@@ -27,6 +28,12 @@ export class CounsellorService {
         pass: process.env.MAIL_PASS,
       },
     });
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_2AM)
+  async handleAutoGenerateSlots() {
+    console.log("🔄 Auto-generating slots via cron job...");
+    await this.autogenrateSlots();
   }
 
   async create(createCounsellorDto: CreateCounsellorDto) {
@@ -88,63 +95,64 @@ export class CounsellorService {
     if (!counsellor) {
       throw new Error(`Counsellor with id ${id} not found`);
     }
-  
-      const weekdays = [
-        "sunday",
-        "monday",
-        "tuesday",
-        "wednesday",
-        "thursday",
-        "friday",
-        "saturday",
-      ];
 
-      const now = new Date();
-      const tomorrow = new Date(now);
-      tomorrow.setDate(now.getDate() + 1);
+    const weekdays = [
+      "sunday",
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+    ];
 
-      const slotsToCreate: Slot[] = [];
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(now.getDate() + 1);
 
-      for (let i = 0; i < 7; i++) {
-        tomorrow.setDate(now.getDate() + i);
-        const presentSlots = await this.slotRepository.findBy({
-          counsellorId: id,
-          date: tomorrow.toISOString().split("T")[0],
-        });
-        const dayName = weekdays[tomorrow.getDay()];
-        const daySlots = slotTimings[dayName];
-        if (
-          !daySlots ||
-          dayName === "saturday" ||
-          dayName === "sunday" ||
-          presentSlots.length > 0
-        ) {
-          continue;
-        }
-        for (
-          let i = 0;
-          i < slotTimings[weekdays[tomorrow.getDay()]]?.length;
-          i++
-        ) {
-          slotsToCreate.push(
-            this.slotRepository.create({
-              counsellorId: id,
-              date: tomorrow.toISOString().split("T")[0],
-              slotTime: slotTimings[weekdays[tomorrow.getDay()]][i],
-              status: SlotStatus.AVAILABLE,
-            })
-          );
-        }
+    const slotsToCreate: Slot[] = [];
 
-        if (slotsToCreate.length>0) {
-          await this.slotRepository.save(slotsToCreate);
-        }
+    for (let i = 0; i < 7; i++) {
+      tomorrow.setDate(now.getDate() + i);
+      const presentSlots = await this.slotRepository.findBy({
+        counsellorId: id,
+        date: tomorrow.toISOString().split("T")[0],
+      });
+      const dayName = weekdays[tomorrow.getDay()];
+      const daySlots = slotTimings[dayName];
+      if (
+        !daySlots ||
+        dayName === "saturday" ||
+        dayName === "sunday" ||
+        presentSlots.length > 0
+      ) {
+        continue;
       }
-      counsellor.slotTimings = slotTimings;
-      this.counsellorRepository.save(counsellor);
-      return { message: 'Slot timings updated successfully', slots: slotsToCreate };
-    
+      for (
+        let i = 0;
+        i < slotTimings[weekdays[tomorrow.getDay()]]?.length;
+        i++
+      ) {
+        slotsToCreate.push(
+          this.slotRepository.create({
+            counsellorId: id,
+            date: tomorrow.toISOString().split("T")[0],
+            slotTime: slotTimings[weekdays[tomorrow.getDay()]][i],
+            status: SlotStatus.AVAILABLE,
+          })
+        );
+      }
 
+      if (slotsToCreate.length > 0) {
+        await this.slotRepository.save(slotsToCreate);
+      }
+    }
+    counsellor.slotTimings = slotTimings;
+    this.counsellorRepository.save(counsellor);
+    return {
+      message: "Slot timings updated successfully",
+      slots: slotsToCreate,
+    };
   }
 
   // async updateSlotTimings(
@@ -235,6 +243,53 @@ export class CounsellorService {
   //   // counsellor.slotTimings = slotTimings;
   //   // return this.counsellorRepository.save(counsellor);
   // }
+
+  async autogenrateSlots() {
+    const counsellors = await this.counsellorRepository.find();
+    const now = new Date();
+    const futureDay = new Date(now);
+    futureDay.setDate(now.getDate() + 7);
+    const weekdays = [
+      "sunday",
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+    ];
+    for (const counsellor of counsellors) {
+      const slotsToCreate: Slot[] = [];
+      const presentSlots = await this.slotRepository.findBy({
+        counsellorId: counsellor.id,
+        date: futureDay.toISOString().split("T")[0],
+      });
+      if (presentSlots.length > 0) continue;
+      if (counsellor.slotTimings) {
+        const dayName = weekdays[futureDay.getDay()];
+        const daySlots = counsellor.slotTimings[dayName];
+        if (!daySlots || dayName === "saturday" || dayName === "sunday") {
+          continue;
+        }
+        for (let i = 0; i < daySlots?.length; i++) {
+          slotsToCreate.push(
+            this.slotRepository.create({
+              counsellorId: counsellor.id,
+              date: futureDay.toISOString().split("T")[0],
+              slotTime: daySlots[i],
+              status: SlotStatus.AVAILABLE,
+            })
+          );
+        }
+      }
+      if (slotsToCreate.length > 0) {
+        await this.slotRepository.save(slotsToCreate);
+      }
+    }
+    return {
+      message: "Slots generated successfully",
+    };
+  }
 
   async findOne(id: string) {
     const counsellor = await this.counsellorRepository.findOne({
