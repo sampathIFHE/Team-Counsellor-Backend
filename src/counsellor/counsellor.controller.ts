@@ -47,7 +47,7 @@ export class CounsellorController {
 
   @Post('updateSlotTimings/:id')
   updateSlotTimings(@Param('id') id: string, @Body()   data: any) {
-    return this.counsellorService.updateSlotTimings(id,   data.slotTimings );
+    return this.counsellorService.updateSlotTimings(id,   data );
   }
 
 

@@ -52,18 +52,56 @@ export class StudentService {
   }
 
 async sendOTPEmail(email: string, otp: string) {
-const stundent:any = await this.studentRepository.findOne({where: [{email},{enrollmentId:email}]});
-if(!stundent){
+const student:any = await this.studentRepository.findOne({where: [{email},{enrollmentId:email}]});
+if(!student){
   throw new NotFoundException("Student not found");
 }
-stundent.otp = otp;
-await this.studentRepository.save(stundent);
-    await this.transporter.sendMail({
+student.otp = otp;
+await this.studentRepository.save(student);
+    // await this.transporter.sendMail({
+    //   from: `"Safe Minds" <${process.env.MAIL_USER}>`,
+    //   to: stundent.email,
+    //   subject: "Your OTP Code",
+    //   text: `Your OTP is ${otp}. It will expire in 5 minutes.`,
+    // });
+
+     try {
+    // Verify connection first
+    await this.transporter.verify();
+
+    const mailOptions = {
       from: `"Safe Minds" <${process.env.MAIL_USER}>`,
-      to: stundent.email,
+      to: student.email,
       subject: "Your OTP Code",
       text: `Your OTP is ${otp}. It will expire in 5 minutes.`,
-    });
+      html: `<p>Your OTP is <strong>${otp}</strong>. It will expire in 5 minutes.</p>`,
+    };
+
+    // Send email with retry logic
+    await this.sendEmailWithRetry(mailOptions, 3);
+    
+  } catch (error) {
+    console.error('Email sending failed:', error);
+    throw new Error('Failed to send OTP email');
+  }
+}
+
+private async sendEmailWithRetry(mailOptions: any, retries: number): Promise<void> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      await this.transporter.sendMail(mailOptions);
+      return; // Success, exit function
+    } catch (error) {
+      console.warn(`Email send attempt ${i + 1} failed:`, error.message);
+      
+      if (i === retries - 1) {
+        throw error; // Last attempt failed
+      }
+      
+      // Wait before retry (exponential backoff)
+      await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, i)));
+    }
+  }
 }
 
 async verifyOTP(email: string, otp: string) {
