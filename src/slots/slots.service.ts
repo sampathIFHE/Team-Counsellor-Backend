@@ -26,7 +26,6 @@ export class SlotsService {
     return await this.slotRepository.save(slot);
   }
 async findByCounsellor(counsellorId: string) {
-    console.log(await this.slotRepository.count())
 //  const slots = await this.slotRepository
 //     .createQueryBuilder('slot')
 //     .where(`slot.counsellor->>'id' = :counsellorId`, { counsellorId })
@@ -35,7 +34,6 @@ async findByCounsellor(counsellorId: string) {
 const slots = await this.slotRepository.find({
   where:{counsellorId}
 })
-  console.log(slots, slots.length)
     const now = new Date();
   
     const filteredSlots = slots.filter(slot => {
@@ -52,7 +50,6 @@ const slots = await this.slotRepository.find({
       return slotDateTime.getTime() > now.getTime();
     });
   
-    console.log('✅ Filtered slots count:', filteredSlots.length);
     return filteredSlots;
   }
 
@@ -79,7 +76,6 @@ async blockTheSlot(id: string, reason: string) {
 
   async findAll() {
     const slots = await this.slotRepository.find();
-    console.log(slots);
     return slots;
   }
 
@@ -87,7 +83,6 @@ async blockTheSlot(id: string, reason: string) {
   const slot = await this.slotRepository.findOne({
     where: { id },
   });
-      console.log(slot);
     return slot?slot:{ message: 'Slot not found' };
   }
 
