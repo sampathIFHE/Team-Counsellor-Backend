@@ -58,6 +58,11 @@ export class CounsellorService {
     return counsellors;
   }
 
+  async clearAllCounsellors (){
+    await this.counsellorRepository.clear();
+    return {message: 'All counsellors have been cleared successfully'};
+  }
+
   async sendOtpEmail(email: string, otp: string) {
     await this.transporter.sendMail({
       from: `"Safe Minds" <${process.env.MAIL_USER}>`,

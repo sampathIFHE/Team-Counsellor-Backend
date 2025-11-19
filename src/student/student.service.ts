@@ -54,6 +54,11 @@ export class StudentService {
     return await this.studentRepository.save(student);
   }
 
+  async clearAllStudents() {
+    await this.studentRepository.clear();
+    return {message: 'All students have been cleared successfully'};
+  }
+
 async sendOTPEmail(email: string, otp: string) {
 let student:any = await this.studentRepository.findOne({where: [{email},{enrollmentId:email}]});
 if(!student){

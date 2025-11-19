@@ -28,6 +28,11 @@ export class AdminController {
     return this.adminService.update(id, updateAdminDto);
   }
 
+  @Delete('clear')
+  clearAllAdmins() {
+    return this.adminService.clearAllAdmins();
+  }
+
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.adminService.remove(id);

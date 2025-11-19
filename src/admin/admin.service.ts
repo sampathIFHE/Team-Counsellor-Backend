@@ -47,6 +47,11 @@ export class AdminService {
     return admins;
   }
 
+  async clearAllAdmins() {
+    await this.adminRepository.clear();
+    return {message: 'All admins have been cleared successfully'};
+  }
+
   async sendOtpEmail(email: string, otp: string) {
     let mail:any
     const admin: any = await this.adminRepository.findOne({ where: [{ email }, {employeeId:email} ]});
