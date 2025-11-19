@@ -55,9 +55,11 @@ export class StudentService {
   }
 
 async sendOTPEmail(email: string, otp: string) {
-const student:any = await this.studentRepository.findOne({where: [{email},{enrollmentId:email}]});
+let student:any = await this.studentRepository.findOne({where: [{email},{enrollmentId:email}]});
 if(!student){
-  throw new NotFoundException("Student not found");
+const newStudent =  await this.studentRepository.create({email});
+await this.studentRepository.save(newStudent);
+student = newStudent;
 }
 student.otp = otp;
 await this.studentRepository.save(student);
@@ -87,6 +89,7 @@ await this.studentRepository.save(student);
     console.error('Email sending failed:', error);
     throw new Error('Failed to send OTP email');
   }
+  return { message: `OTP sent to ${student.email}`, studentId: student.id  };
 }
 
 private async sendEmailWithRetry(mailOptions: any, retries: number): Promise<void> {

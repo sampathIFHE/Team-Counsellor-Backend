@@ -1,8 +1,8 @@
-import { IsNotEmpty, IsString } from "class-validator";
+import { IsNotEmpty, IsOptional, IsString } from "class-validator";
 
 export class CreateStudentDto {
 
-    @IsNotEmpty()
+    @IsOptional()
     @IsString()
     name: string;
 
@@ -10,23 +10,23 @@ export class CreateStudentDto {
     @IsString()
     email: string;
 
-    @IsNotEmpty()
+    @IsOptional()
     @IsString()
     mobile: string;
 
-    @IsNotEmpty()
+    @IsOptional()
     @IsString()
     school: string;
 
-    @IsNotEmpty()
+    @IsOptional()
     @IsString()
     enrollmentId: string;
 
-    @IsNotEmpty()
+    @IsOptional()
     @IsString()
     program: string;
 
-    @IsNotEmpty()
+    @IsOptional()
     @IsString()
     yearOfJoining: string;
 

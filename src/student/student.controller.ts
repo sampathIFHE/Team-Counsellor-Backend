@@ -35,8 +35,9 @@ export class StudentController {
   @Post('send-otp')
   async sendOtp(@Body() body: { email: string }) {
      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    await this.studentService.sendOTPEmail(body.email, otp);
-    return { message: `OTP sent to ${body.email}` };
+    const response = await this.studentService.sendOTPEmail(body.email, otp);
+    return response;
+   
   }
 
   @Post('verify-otp')

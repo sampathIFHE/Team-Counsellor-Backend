@@ -5,28 +5,28 @@ export class Student {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column()
+  @Column({nullable: true})
   name: string;
 
   @Column({ unique: true })
   email: string;
 
-  @Column({ unique: true })
+  @Column({ unique: true, nullable: true })
   mobile: string;
 
-  @Column()
+  @Column({nullable: true})
   school: string;
 
-  @Column({unique: true})
+  @Column({unique: true, nullable: true})
   enrollmentId: string;
 
-  @Column()
+  @Column({nullable: true})
   program: string;
 
   @Column({ nullable: true })
   otp: string;
 
-  @Column()
+  @Column({nullable: true})
   yearOfJoining: string;
 
   @Column({ nullable: true })
