@@ -11,6 +11,7 @@ import { Student } from "./entities/student.entity";
 import { Repository } from "typeorm";
 import * as nodemailer from 'nodemailer';
 import { Slot , SlotStatus} from "src/slots/entities/slot.entity";
+import { Counsellor } from "src/counsellor/entities/counsellor.entity";
 
 
 @Injectable()
@@ -23,6 +24,10 @@ export class StudentService {
 
     @InjectRepository(Slot)
     private slotRepository: Repository<Slot>,
+
+    @InjectRepository(Counsellor)
+    private counsellorRepository: Repository<Counsellor>,
+
   ) {
         this.transporter = nodemailer.createTransport({
           service: "gmail",
@@ -146,6 +151,150 @@ async slotbooking(studentId: string,slotId : string) {
   slot.status = SlotStatus.BOOKED;
   slot.userId = student.id;
   await this.slotRepository.save(slot);
+
+  const counsellor:any = await this.counsellorRepository.findOneBy({id: slot.counsellorId});
+await this.transporter.sendMail({
+  from: `"Safe Minds" <${process.env.MAIL_USER}>`,
+  to: counsellor.email,
+  subject: `Your Calendar Just Got Busy!`,
+  text: `Session Details:\n\nStudent: ${student.name}\nDate: ${slot.date}\nTime: ${slot.slotTime}\nCounsellor: ${counsellor.name}\n\nPlease be prepared for the session.`,
+  html: `
+    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+      <!-- Header -->
+      <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px 20px; text-align: center; color: white;">
+        <h1 style="margin: 0; font-size: 24px; font-weight: 600;">Session Confirmed ✅</h1>
+        <p style="margin: 8px 0 0; opacity: 0.9; font-size: 16px;">Your expertise is needed</p>
+      </div>
+
+      <!-- Main Content -->
+      <div style="padding: 35px 30px;">
+        <!-- Session Card -->
+        <div style="background: #f8fafc; border-radius: 12px; padding: 25px; margin-bottom: 25px; border-left: 4px solid #667eea;">
+          <h3 style="margin: 0 0 20px 0; color: #1e293b; font-size: 18px;">📋 Session Details</h3>
+          
+          <div style="display: grid; gap: 15px;">
+            <!-- Student -->
+            <div style="display: flex; align-items: center;">
+              <div style="background: #e0e7ff; padding: 8px; border-radius: 8px; margin-right: 15px;">
+                <span style="color: #4f46e5;">👤</span>
+              </div>
+              <div style="margin: 0 0 5px 0;">
+                <div style="color: #64748b; font-size: 14px; font-weight: 500;">STUDENT</div>
+                <div style="color: #1e293b; font-size: 16px; font-weight: 600;">${student.name}</div>
+              </div>
+            </div>
+
+            <!-- Date & Time -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+              <!-- Date -->
+              <div style="display: flex; align-items: center; margin: 0 0 5px 0;">
+                <div style="background: #dcfce7; padding: 8px; border-radius: 8px; margin-right: 15px;">
+                  <span style="color: #16a34a;">📅</span>
+                </div>
+                <div>
+                  <div style="color: #64748b; font-size: 14px; font-weight: 500;">DATE</div>
+                  <div style="color: #1e293b; font-size: 15px; font-weight: 500;">${slot.date}</div>
+                </div>
+              </div>
+
+              <!-- Time -->
+              <div style="display: flex; align-items: center; margin: 0 0 5px 0;">
+                <div style="background: #fef3c7; padding: 8px; border-radius: 8px; margin-right: 15px;">
+                  <span style="color: #d97706;">⏰</span>
+                </div>
+                <div>
+                  <div style="color: #64748b; font-size: 14px; font-weight: 500;">TIME</div>
+                  <div style="color: #1e293b; font-size: 15px; font-weight: 500;">${slot.slotTime}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Counsellor -->
+            <div style="display: flex; align-items: center; ">
+              <div style="background: #fce7f3; padding: 8px; border-radius: 8px; margin-right: 15px;">
+                <span style="color: #db2777;">💼</span>
+              </div>
+              <div>
+                <div style="color: #64748b; font-size: 14px; font-weight: 500;">COUNSELLOR</div>
+                <div style="color: #1e293b; font-size: 15px; font-weight: 500;">${counsellor.name}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+  `,
+});
+await this.transporter.sendMail({
+  from: `"Safe Minds" <${process.env.MAIL_USER}>`,
+  to: student.email,
+  subject: `Session Confirmed with ${counsellor.name} on ${slot.date}`,
+  text: `Session Details:\n\nCounsellor: ${counsellor.name}\nDate: ${slot.date}\nTime: ${slot.slotTime}\nStudent: ${student.name}\n\nWe're looking forward to supporting you!`,
+  html: `
+    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+      <!-- Header -->
+      <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 30px 20px; text-align: center; color: white;">
+        <h1 style="margin: 0; font-size: 24px; font-weight: 600;">Session Confirmed ✅</h1>
+        <p style="margin: 8px 0 0; opacity: 0.9; font-size: 16px;">Your wellness journey continues</p>
+      </div>
+
+      <!-- Main Content -->
+      <div style="padding: 35px 30px;">
+        <!-- Session Card -->
+        <div style="background: #f0fdf4; border-radius: 12px; padding: 25px; margin-bottom: 25px; border-left: 4px solid #10b981;">
+          <h3 style="margin: 0 0 20px 0; color: #1e293b; font-size: 18px;">📋 Your Session Details</h3>
+          
+          <div style="display: grid; gap: 15px;">
+            <!-- Counsellor -->
+            <div style="display: flex; align-items: center;margin: 0 0 5px 0">
+              <div style="background: #dcfce7; padding: 8px; border-radius: 8px; margin-right: 15px;">
+                <span style="color: #16a34a;">👨‍⚕️</span>
+              </div>
+              <div style="margin: 0 0 5px 0;">
+                <div style="color: #64748b; font-size: 14px; font-weight: 500;">COUNSELLOR</div>
+                <div style="color: #1e293b; font-size: 16px; font-weight: 600;">${counsellor.name}</div>
+              </div>
+            </div>
+
+            <!-- Date & Time -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+              <!-- Date -->
+              <div style="display: flex; align-items: center;">
+                <div style="background: #dbeafe; padding: 8px; border-radius: 8px; margin-right: 15px;">
+                  <span style="color: #2563eb;">📅</span>
+                </div>
+                <div style="margin: 0 0 5px 0;">
+                  <div style="color: #64748b; font-size: 14px; font-weight: 500;">DATE</div>
+                  <div style="color: #1e293b; font-size: 15px; font-weight: 500;">${slot.date}</div>
+                </div>
+              </div>
+
+              <!-- Time -->
+              <div style="display: flex; align-items: center;">
+                <div style="background: #fef3c7; padding: 8px; border-radius: 8px; margin-right: 15px;">
+                  <span style="color: #d97706;">⏰</span>
+                </div>
+                <div style="margin: 0 0 5px 0;">
+                  <div style="color: #64748b; font-size: 14px; font-weight: 500;">TIME</div>
+                  <div style="color: #1e293b; font-size: 15px; font-weight: 500;">${slot.slotTime}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Student -->
+            <div style="display: flex; align-items: center;">
+              <div style="background: #fce7f3; padding: 8px; border-radius: 8px; margin-right: 15px;">
+                <span style="color: #db2777;">🎓</span>
+              </div>
+              <div>
+                <div style="color: #64748b; font-size: 14px; font-weight: 500;">STUDENT</div>
+                <div style="color: #1e293b; font-size: 15px; font-weight: 500;">${student.name}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+    </div>
+  `,
+});
+
   return slot;
 }
 
